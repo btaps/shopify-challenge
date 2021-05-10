@@ -1,62 +1,17 @@
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { useDispatch, useSelector } from "react-redux";
-import { auth, provider } from "../firebase";
-import {
-  selectUserName,
-  selectUserPhoto,
-  setUserLoginDetails,
-  setSignOutState,
-} from "../features/user/userSlice";
+import Search from "./Search";
 
-function Header() {
-  const dispatch = useDispatch();
-  const userName = useSelector(selectUserName);
-  const userPhoto = useSelector(selectUserPhoto);
-
-  useEffect(() => {
-    auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        dispatch(
-          setUserLoginDetails({
-            name: user.displayName,
-            email: user.email,
-            photo: user.photoURL,
-          })
-        );
-      }
-    });
-  }, [userName, dispatch]);
-
-  const handleAuth = () => {
-    if (!userName) {
-      auth
-        .signInWithPopup(provider)
-        .then((result) => {
-          dispatch(
-            setUserLoginDetails({
-              name: result.user.displayName,
-              email: result.user.email,
-              photo: result.user.photoURL,
-            })
-          );
-        })
-        .catch((error) => {
-          alert(error.message);
-        });
-    } else if (userName) {
-      auth
-        .signOut()
-        .then(() => {
-          dispatch(setSignOutState());
-        })
-        .catch((err) => alert(err.message));
-    }
-  };
+function Header({ handleAuth, userPhoto, userName, setSearch, showSearch }) {
+  const [searchOpacity, setSearchOpacity] = useState(0);
+  const [searchVisibility, setSearchVisibility] = useState("hidden");
 
   return (
     <React.Fragment>
-      <StickyGithub href="/" target="_blank">
+      <StickyGithub
+        href="https://github.com/btaps/shopify-challenge"
+        target="_blank"
+      >
         <svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true">
           <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
           <path
@@ -73,18 +28,34 @@ function Header() {
       </StickyGithub>
       <Nav>
         <Logo>
-          <img src="/images/logo.svg" alt="Shopify" />
+          {window.screen.width >= 480 ? (
+            <img src="/images/logo.svg" alt="Shopify" />
+          ) : (
+            <img src="/images/logo-small.svg" alt="Shopify" />
+          )}
         </Logo>
         {!userName ? (
           <Login onClick={handleAuth}>Login</Login>
         ) : (
           <>
+            <Search
+              opacity={searchOpacity}
+              setOpacity={setSearchOpacity}
+              visibility={searchVisibility}
+              setVisibility={setSearchVisibility}
+            />
             <NavMenu>
               <a href="/#">
                 <img src="/images/home-icon.svg" alt="HOME" />
                 <span>HOME</span>
               </a>
-              <a href="/#">
+              <a
+                href="/#"
+                onClick={() => {
+                  setSearchVisibility("visible");
+                  setSearchOpacity(1);
+                }}
+              >
                 <img src="/images/search-icon.svg" alt="SEARCH" />
                 <span>SEARCH</span>
               </a>
@@ -113,19 +84,24 @@ const octoWave = keyframes`
 `;
 
 const Nav = styled.nav`
+  background-color: #040714;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 70px;
+  height: 73px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding-left: calc(5% + 18px);
-  padding-right: calc(5% + 25px);
+  padding-right: calc(5% + 18px);
   border-bottom: 1px solid rgb(210, 213, 217);
   letter-spacing: 1.5px;
-  z-index: 3;
+  z-index: 1;
+
+  @media only screen and (min-width: 480px) and (max-width: 768px) {
+    padding-right: calc(5% + 30px);
+  }
 `;
 
 const Logo = styled.a`
@@ -154,6 +130,7 @@ const NavMenu = styled.div`
   position: relative;
   margin-right: auto;
   margin-left: 25px;
+
   a {
     display: flex;
     align-items: center;
@@ -164,6 +141,7 @@ const NavMenu = styled.div`
       width: 20px;
       z-index: auto;
     }
+
     span {
       color: rgb(249, 249, 249);
       font-size: 13px;
@@ -198,7 +176,7 @@ const NavMenu = styled.div`
       }
     }
   }
-  @media (max-width: 768px) {
+  @media (max-width: 480px) {
     display: none;
   }
 `;
@@ -220,6 +198,7 @@ const DropDown = styled.div`
   letter-spacing: 3px;
   width: 100px;
   opacity: 0;
+  z-index: 5;
 `;
 
 const Login = styled.a`
@@ -259,10 +238,10 @@ const SignOut = styled.div`
 `;
 
 const StickyGithub = styled.a`
-  position: absolute;
+  position: fixed;
   top: 0;
   right: 0;
-  z-index: 4;
+  z-index: 2;
 
   .octo-arm {
     transform-origin: 130px 106px;
@@ -272,6 +251,10 @@ const StickyGithub = styled.a`
     .octo-arm {
       animation: ${octoWave} 560ms ease-in-out;
     }
+  }
+
+  @media (max-width: 480px) {
+    display: none;
   }
 `;
 
